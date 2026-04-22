@@ -1,0 +1,96 @@
+notes on movingaverages
+
+--- introduction --- 
+
+The MA is a technical indicator used by traders to spot emerging and common trends in markets. It is a mathematical formula used to find averages 
+by using data to find trends and smooth out price action by filtering out ‘noise’ from random fluctuations. (* price action is taking raw 
+financial data to make trading decision,without reliying on more complex technical indicators that may lag behind. being able to take a stance
+and move on changes in the price of an asset is invaluable for profitable trading strategy)
+This project seeks to take financial data from Yahoo Finance using yfinance, an API wrapper that sends requests to YF servers, and then use pandas 
+to manipulate data and perform calculations. I will calculate long and short moving averages, and attempt to use the Sharpe ratio, which measures 
+the performance of an investment compared to a risk-free asset, after adjusting for its risk.
+This project uses the simple moving average (SMA), which does not give preference to any data in terms of reactions to price. On the other hand, 
+the exponential moving average (EMA), places greater weight on more recent dates, making it more sensitive to shifts in the recent pricing of an 
+asset. While this may prove more useful in trading strategy, for the sake of this project, as well as me being a beginner, we will stick to SMA,
+and perhaps do a followup with EMA. The SMA formula is calculated by taking the average closing price of a security over any period desired. To \
+calculate a moving average formula, the total closing price is divided by the number of periods.
+
+--- data acquisition ---
+- defining key variables for yfinance
+- ticker --> stock ticker, SPY is used as an example here (s&p 500 ETF trust)
+- hist_period --> timeframe to grab data from (5y as an example)
+- tick_obj --> initializes a ticker object on the ticker variable. This ticker object takes on all the called characteristics of a specific stock, 
+all of which would be far too long to list out here, and instead should be found on the yfinance documentation. In this circumstance, the only 
+property given here is the ticker of the tracked ETF here, SPY.
+- price_data --> history() the great complication of the yfinance library. it takes the following as inputs: period (data period to download, 
+starting at current, then going back to period), interval (interval of sampling), start and end (if period not used to set start and end), prepost 
+(include pre or post market hours data), auto_adjust (adjust OHLC prices automatically), and actions (download stock divs and stock splits events)
+price_data is the history() of tick_obj, with a period of hist_period, which would in this case be 5 years. this automatically creates a Pandas 
+Dataframe on the history.
+- quick print statement to alert user of any possible delay in execution
+- close_prices --> data for market close called on the history created by price_data.  .copy() to ensure we are creating a fresh, standalone 
+dataset in memory rather than a fragile view of the original data
+- another print statement to let the user know the data has been called
+- close_prices.head() gives a view of the firt 5 entries in the dataframe. this is a common data science technique where small set of the loaded 
+data is called to verify that it is correct or behaving as intended.
+
+--- moving averages ---
+- first set short window and long window to 50 and 200. these are our lookup windows for data using pd. 50 daysrepresents a short term trend, while 
+200 days is sufficient to see macro trends / long term.
+- close_prices: has 4 components, short_ma, long_ma, Signal, and Position_Change. these are all calculated using the built in method "rolling" from 
+pandas, as well as .means(). rolling moves up the data sat from the current, based on a set window, both of which we created previously. thus, we 
+can calculate the short and long moving averages by rolling back a certain number of days as earlier defined, and take the mean values. this is 
+then stored in a new column in the close_prices dataframe. 
+
+Now that we have the SMAs, we can try to implement some strategy using Signal. In general, with SMA, we try to go long when short crosses above 
+the long, exit when it crosses back. This is easily calculated using np.where, which is essentially an if then statement for arrays. the 
+condition in this case is the status of the short SMA relative to the long SMA. So, if the rolling avg for the short is greater than the long, 
+we return 1/hold the asset long term. if false, return 0/ exit the asset/ cash
+
+From Signal, we can immediately take a stance on changing position on an asset..diff() subtracts the previous day's signal from today's signal. 
+If signal goes from 0 to 1, .diff() is 1 (BUY trigger). If signal goes from 1 to 0, .diff() is -1 (SELL trigger). if signal does not change, 
+nothing happens (HOLD)
+
+- close_prices.dropna(inplace=True) this is just for consistentcy and making sure the SMA's are possible to calculate a 200 day average must be 
+calculated on exactly 200 days, and a 50 day average on exactly 50. this means that our data set will have NaN in the respective average columns 
+where calculation is impossible. we use dropna in place so that those rows are emptied, but left in place so that our math remains calculable :)
+
+--- backtesting and metrics ---
+- the returns column of close_prices is calculated as the percent change of the close price, via pd If SPY goes from $100 to $101, this returns 0.01.
+- the strategy returns is calculated as the close prices of returns multiplied by the position change from the previous day. This is an important 
+distinction, as it constitutes the prediction whose profit we are measuring. This will show profit if the switch was made according to the signal 
+that indicated position (*1) or that no profit was made from not switching (*0). This is achieved using the shift(1) by pd, which moves the row 
+down one entry
+- cumulative market returns and cumulative strategy returns are calculated by adding 1 to the returns and calculate the cumulative product cumprod(). 
+Thus a 2% and then 3% return will be 1.02*1.03 rather than their sum, which is inaccurate. This applies to both return columns, so they each get 
+cumprod to their daily returns
+- once again, NaN values are removed to make calculations possible.
+
+- now, the sharpe ratio is calculated. the sharpe ratio is measures an investment's risk-adjusted return by dividing its excess return (above the 
+risk-free rate) by its volatility (standard deviation). This tells us whether the returns made on the trade are due to strategy or taking on unnecessary 
+risk. The risk-free rate is the theoretical rate of return on an investment with zero risk of financial loss, commonly approximated by the yield on 
+short-term government bonds. here we use 0% risk free rate for simplicity, although this is not necessarily realistic. the calculation of the sharpe 
+ratio is given as follows:
+
+(Portfolio Asset Return - Risk-Free Rate of Return) / Standard Deviation of the excess rate of return (AKA volatility).
+
+To make comparisons, the sharpe ratio must be annualized: converting a short-term, partial-year, or periodic financial figure (such as monthly or 
+quarterly income or interest) into an estimated yearly rate. Because there are 252 trading days per year, the ratio is multiplied by the sqrt of 252. 
+
+--- visualization ---
+-  2 subblots with ax1 and ax2 are set up. they will share the same plot, and with sharex = True, they will share the same x axis, which is important 
+here, as the axis is date related.
+- ax1 - baselines for the close prices, and the two moving averages. this is simple line plots, and is based on the columns from the dataframe
+the days in which the strategy determined buying and selling are listed by checking signal change (recall that buying had a signal diff of 0 -> 1: 1,
+and selling had a signal diff of 1 -> 0: -1). These days are plotted as a scatter plot, using arrow markers (red for sell, green for buy), transposed 
+on top of the lines (using zorder). This will create a simple way to see on the chart where the signal denoted a strategic shift from buying to 
+selling or vice versa.
+- ax2 - money made by market vs made by strategy. the natural change in the market will be shown by the natural change in stock price, previously
+designated as cum_market_returns in gray. Strategy returns will be cum_strat_returns, in purple.
+- now we can continue to visualize, with tight_layout to keep padding.
+
+--- CLT --- 
+movingaverages.py is the crude version, running on one specific set of values provided. for the sake of a more clean, professional program, the
+whole project will be refactored into MAfunctional.py, where input error will be addressed, as well as provide flexibility to test different simple
+moving averages or assets from yfinance.
+
