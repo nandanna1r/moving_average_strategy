@@ -12,8 +12,12 @@ the performance of an investment compared to a risk-free asset, after adjusting 
 This project uses the simple moving average (SMA), which does not give preference to any data in terms of reactions to price. On the other hand, 
 the exponential moving average (EMA), places greater weight on more recent dates, making it more sensitive to shifts in the recent pricing of an 
 asset. While this may prove more useful in trading strategy, for the sake of this project, as well as me being a beginner, we will stick to SMA,
-and perhaps do a followup with EMA. The SMA formula is calculated by taking the average closing price of a security over any period desired. To \
+and perhaps do a followup with EMA. The SMA formula is calculated by taking the average closing price of a security over any period desired. To 
 calculate a moving average formula, the total closing price is divided by the number of periods.
+Because of the reliance on historical average in terms of short and long windows, there is a strong likelihood of  delayed buy or sell signals, 
+especially during periods of rapid price changes. While they are effective at highlighting past trends, this delay may cause traders to enter or 
+exit positions too late, missing key opportunities or incurring losses. In testing different funds with the strategy seen here, the strategy based 
+investing often lead to losses/lagging behind the performance of the fund in real time.
 
 --- data acquisition ---
 - defining key variables for yfinance
@@ -75,10 +79,17 @@ ratio is given as follows:
 (Portfolio Asset Return - Risk-Free Rate of Return) / Standard Deviation of the excess rate of return (AKA volatility).
 
 To make comparisons, the sharpe ratio must be annualized: converting a short-term, partial-year, or periodic financial figure (such as monthly or 
-quarterly income or interest) into an estimated yearly rate. Because there are 252 trading days per year, the ratio is multiplied by the sqrt of 252. 
+quarterly income or interest) into an estimated yearly rate. Because there are 252 trading days per year, the ratio is multiplied by the sqrt of 252.
+The interpretation of the Sharpe Ratio is as follows (per the Motley Fool): In general, a Sharpe Ratio between 1 and 2 is considered good. A ratio 
+between 2 and 3 is very good, and any result higher than 3 is excellent, but there are some caveats to its usage. The most important thing to note is
+the Sharpe Ratio is always calculated on historical data, and therefore cannot, or rather should not necessarily be used to forecast future returns, as
+market conditions are often volatile. It also assumes the normal distribution of investment returns. normal distributions fail to take large market moves 
+into account, and volatility may be higher in one direction than the other. Especially volatile markets likely have non-normal distribution of returns,
+and as such, standard deviation becomes a less effective metric for measuring risk assumed. All this means is that the Sharpe Ratio is a useful tool, 
+but should never be considered the end all be all in investments, rather as a supplement to a wide range of evaluators of investment performance.
 
 --- visualization ---
--  2 subblots with ax1 and ax2 are set up. they will share the same plot, and with sharex = True, they will share the same x axis, which is important 
+-  2 subplots with ax1 and ax2 are set up. they will share the same plot, and with sharex = True, they will share the same x axis, which is important 
 here, as the axis is date related.
 - ax1 - baselines for the close prices, and the two moving averages. this is simple line plots, and is based on the columns from the dataframe
 the days in which the strategy determined buying and selling are listed by checking signal change (recall that buying had a signal diff of 0 -> 1: 1,
