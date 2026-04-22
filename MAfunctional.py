@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-def fetch_data(tick_sym: str, hist_period: str = "5y") -> pd.DataFrame:
+def fetch_data(tick_sym: str, hist_period: str = "5y"):
     print(f"\nFetching {hist_period}s of data for {tick_sym}...")
     try:
         tick_obj = yf.Ticker(tick_sym)
@@ -19,7 +19,7 @@ def fetch_data(tick_sym: str, hist_period: str = "5y") -> pd.DataFrame:
         print(f"Error fetching data: {e}")
         return pd.DataFrame()
 
-def calc_signals(df: pd.DataFrame, short_win: int, long_win: int) -> pd.DataFrame:
+def calc_signals(df: pd.DataFrame, short_win: int, long_win: int):
    
     df['short_ma'] = df['Close'].rolling(window=short_win).mean()
     df['long_ma'] = df['Close'].rolling(window=long_win).mean()
@@ -31,7 +31,7 @@ def calc_signals(df: pd.DataFrame, short_win: int, long_win: int) -> pd.DataFram
     df.dropna(inplace=True)
     return df
 
-def calc_metrics(df: pd.DataFrame, rf_rate: float = 0.0) -> dict:
+def calc_metrics(df: pd.DataFrame, rf_rate: float = 0.0):
   
     df['mkt_ret'] = df['Close'].pct_change()
     df['strat_ret'] = df['mkt_ret'] * df['signal'].shift(1)
@@ -106,7 +106,7 @@ def main():
                 continue
 
         except ValueError:
-            print("Error: No floats allowed. Enter valid integers for windows. Try again.")
+            print("Error: Invalid ticker or input. Enter valid integers for windows. Try again.")
             continue
 
         price_df = fetch_data(tick_sym)

@@ -35,7 +35,7 @@ Dataframe on the history.
 - close_prices --> data for market close called on the history created by price_data.  .copy() to ensure we are creating a fresh, standalone 
 dataset in memory rather than a fragile view of the original data
 - another print statement to let the user know the data has been called
-- close_prices.head() gives a view of the firt 5 entries in the dataframe. this is a common data science technique where small set of the loaded 
+- close_prices.head() gives a view of the first 5 entries in the dataframe. this is a common data science technique where small set of the loaded 
 data is called to verify that it is correct or behaving as intended.
 
 --- moving averages ---
@@ -105,3 +105,24 @@ movingaverages.py is the crude version, running on one specific set of values pr
 whole project will be refactored into MAfunctional.py, where input error will be addressed, as well as provide flexibility to test different simple
 moving averages or assets from yfinance.
 
+-- MAfunctional: convert all the above sections into functions.
+- fetch_data takes a ticker and period as inputs, and creates a df, while also doing some error handling. If the provided ticker is not valid (the df will 
+be empty for that call) or if there are any other errors, it raises a ValueError or returns and Exception. Otherwise, it will create a dataframe as described
+above in data acquisition, as well as define all the variables and processes already defined.
+- calc_signals does not do anything different from the processes described in the moving averages section above
+- again, calc_metrics follows the backtesting and metric section
+- plot_results follows the visualization sections from above
+- finally main is the CLI for user interaction main takes a ticker input, or 'q' to quit the program. The error handling here is in regards to ensuring that 
+the ticker that is input is for an existing fund. If a nonexistent or mispelled ticker is input, the user is prompted to try again. Once a valid ticker is 
+input, the windows are to be assigned. The only checks here are whether the user inputs positive integers, as well as the short moving average is smaller than
+the long moving average window. This is intuitive, as the recent history is being compared to historical trend. The fetch_data function, calc_signals, calc_metrics
+and plot_resutls is called. Overall this secction is hands off, and the backtesting results are printed in the terminal. After this, it returns to the stage of 
+asking for input, ticker or exit.
+
+--- Closing ---
+I would say this went decently smoothly for my first finance related project. I understand that it is quite the crude strategy, but this is more of a proof of
+concept that I could do it. I plan to explore more complex strategies, although I dislike getting into projects that I don't necessarily understand the theoretical
+background of. I do a lot of research before beginning my projects so that I can confidently explain them if asked. Overall, this is a simple financial project, and
+the amount of learning I did here pales in comparison to the amount of reading I did on numpy and pandas in order to understand data frames and their methods, especially
+in combination to interact with the financial data frame. Yfinance is also quite deep in my opinion, with history being a method with a very wide range of inputs.
+In conclusion, I enjoyed this project, but there is a lot more I would like to know about this field.
